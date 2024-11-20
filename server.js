@@ -1,6 +1,6 @@
 const express = require("express");
 const routes = require("./routes");
-
+const { port } = require("./config.js");
 const logger = require("./utils/logger.js");
 
 const app = express();
@@ -38,8 +38,8 @@ function auth(req, res, next) {
 
 app.use("/api", routes);
 
-app.listen(8080, () => {
-  logger.info("Server listening on port 8080");
+app.listen(port, () => {
+  logger.info(`Server listening on port ${port}`);
 });
 
 module.exports = app;

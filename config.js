@@ -9,4 +9,6 @@ if (process.env.DEV == "true") {
 
 let alnApiKey = process.env.ALN_API_KEY;
 
-module.exports = { hsApiKey, alnApiKey };
+let port = process.env.PORT;
+
+module.exports = { hsApiKey, alnApiKey, port };
