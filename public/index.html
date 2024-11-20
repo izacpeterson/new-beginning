@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" <html data-theme="corporate"></html>
+  <head >
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Cron Jobs Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-base-200">
+    <div class="container mx-auto p-4">
+      <h1 class="text-3xl font-bold mb-4">Opiniion Cron Dashboard</h1>
+
+      <!-- Buttons to start or stop all jobs -->
+      <div class="mb-4">
+        <button
+          id="start-all"
+          class="btn btn-success mr-2"
+        >
+          Start All Jobs
+        </button>
+        <button
+          id="stop-all"
+          class="btn btn-error"
+        >
+          Stop All Jobs
+        </button>
+      </div>
+
+      <!-- Container for cron job cards -->
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        id="cron-cards"
+      >
+        <!-- Cron job cards will be inserted here -->
+      </div>
+
+      <!-- Logs Section -->
+      <div class="mt-8">
+        <h2 class="text-2xl font-bold mb-4">Application Logs</h2>
+        <button
+          id="refresh-logs"
+          class="btn btn-secondary mb-4"
+        >
+          Refresh Logs
+        </button>
+        <pre
+          id="logs"
+          class="bg-gray-800 text-white p-4 rounded overflow-auto"
+          style="max-height: 400px"
+        ></pre>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const cronCardsContainer = document.getElementById('cron-cards');
+
+        // Fetch the cron status
+        function fetchCronStatus() {
+          fetch('/api/crons/status')
+            .then((response) => response.json())
+            .then((data) => {
+              cronCardsContainer.innerHTML = ''; // Clear existing cards
+
+              data.forEach((cron) => {
+                // Create card element
+                const card = document.createElement('div');
+                card.className = 'card shadow-xl bg-base-100';
+
+                // Card body
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body';
+
+                // Card title
+                const title = document.createElement('h2');
+                title.className = 'card-title';
+                title.textContent = cron.name;
+
+                // Status badge
+                const statusBadge = document.createElement('div');
+                statusBadge.className = 'badge';
+                statusBadge.textContent = cron.isRunning ? 'Running' : 'Stopped';
+                statusBadge.classList.add(cron.isRunning ? 'badge-success' : 'badge-error');
+
+                // Last execution
+                const lastExecution = document.createElement('p');
+                lastExecution.textContent = 'Last Execution: ' + (cron.lastExecution ? cron.lastExecution : 'Never');
+
+                // Next execution
+                const nextExecution = document.createElement('p');
+                nextExecution.textContent = 'Next Execution: ' + (cron.nextExecution ? cron.nextExecution : 'N/A');
+
+                // Action buttons container
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'card-actions justify-end';
+
+                // Force Execute button
+                const forceButton = document.createElement('button');
+                forceButton.className = 'btn btn-primary';
+                forceButton.textContent = 'Force Execute';
+
+                forceButton.addEventListener('click', function () {
+                  fetch('/api/crons/force/' + cron.name)
+                    .then((response) => response.json())
+                    .then((data) => {
+                      alert(data.message);
+                      fetchCronStatus(); // Refresh the cron status
+                    });
+                });
+
+                // Append elements
+                cardBody.appendChild(title);
+                cardBody.appendChild(statusBadge);
+                cardBody.appendChild(lastExecution);
+                cardBody.appendChild(nextExecution);
+                buttonContainer.appendChild(forceButton);
+                cardBody.appendChild(buttonContainer);
+                card.appendChild(cardBody);
+                cronCardsContainer.appendChild(card);
+              });
+            });
+        }
+
+        // Event listeners for Start All and Stop All buttons
+        document.getElementById('start-all').addEventListener('click', function () {
+          fetch('/api/crons/startall')
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.msg);
+              fetchCronStatus();
+            });
+        });
+
+        document.getElementById('stop-all').addEventListener('click', function () {
+          fetch('/api/crons/stopall')
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.msg);
+              fetchCronStatus();
+            });
+        });
+
+        // Fetch logs
+        function fetchLogs() {
+          fetch('/api/logs')
+            .then((response) => response.text())
+            .then((data) => {
+              const logsElement = document.getElementById('logs');
+              logsElement.textContent = data;
+            });
+        }
+
+        // Event listener for Refresh Logs button
+        document.getElementById('refresh-logs').addEventListener('click', function () {
+          fetchLogs();
+        });
+
+        // Initial fetch of cron status and logs
+        fetchCronStatus();
+        fetchLogs();
+
+        // Optional: Polling to update cron status and logs every 30 seconds
+        setInterval(fetchCronStatus, 10000);
+        setInterval(fetchLogs, 10000);
+      });
+    </script>
+  </body>
+</html>
