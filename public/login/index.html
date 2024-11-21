@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Login</title>
+  </head>
+  <body class="flex items-center justify-center min-h-screen bg-base-200">
+    <div class="card w-96 bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-center">Login</h2>
+        <div class="form-control w-full">
+          <label class="label" for="email">
+            <span class="label-text">Email</span>
+          </label>
+          <input type="text" id="email" placeholder="Enter your email" class="input input-bordered w-full" />
+        </div>
+        <div class="form-control w-full mt-4">
+          <label class="label" for="password">
+            <span class="label-text">Password</span>
+          </label>
+          <input type="password" id="password" placeholder="Enter your password" class="input input-bordered w-full" />
+        </div>
+        <div class="card-actions mt-6">
+          <button id="btn" class="btn btn-primary w-full">Login</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.getElementById("btn").addEventListener("click", async () => {
+        let email = document.getElementById("email").value;
+        let password = document.getElementById("password").value;
+
+        console.log(email, password);
+
+        let response = await fetch(`/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: email, key: password }),
+        });
+
+        let data = await response.json();
+
+        console.log(response);
+
+        console.log(data);
+
+        if (data.success) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      });
+    </script>
+  </body>
+</html>

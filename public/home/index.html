@@ -38,10 +38,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         const apiKey = urlParams.get("key");
 
-        if (!apiKey) {
-          alert("API key is missing in the URL. Please provide a valid key.");
-          return;
-        }
+        // if (!apiKey) {
+        //   alert("API key is missing in the URL. Please provide a valid key.");
+        //   return;
+        // }
 
         // Helper function to append the API key to API endpoints
         function appendApiKey(url) {

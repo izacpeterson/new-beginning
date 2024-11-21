@@ -2,13 +2,39 @@ const express = require("express");
 const routes = require("./routes");
 const { port } = require("./config.js");
 const logger = require("./utils/logger.js");
+const session = require("express-session");
 
 const app = express();
-
-app.use(auth);
-
 app.use(express.json());
-app.use("/", express.static("public"));
+
+app.use(
+  session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      httpOnly: true,
+    },
+  })
+);
+
+app.use((req, res, next) => {
+  const loggedIn = req.session.loggedIn || false;
+
+  let dir;
+  if (loggedIn) {
+    dir = "public/home";
+  } else {
+    dir = "public/login";
+  }
+
+  express.static(dir)(req, res, next);
+});
+
+app.use("/api", auth);
+
+// app.use("/", express.static("public"));
 
 function auth(req, res, next) {
   // const clientIp = req.ip || req.connection.remoteAddress;
@@ -24,7 +50,7 @@ function auth(req, res, next) {
   //   next();
   //   return;
   // }
-  if (req.query.key == process.env.API_KEY) {
+  if (req.query.key == process.env.API_KEY || req.body.key == process.env.API_KEY || req.session.loggedIn) {
     next();
     return;
   } else {

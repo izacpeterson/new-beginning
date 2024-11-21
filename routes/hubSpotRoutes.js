@@ -4,7 +4,6 @@ const ALN = require("../integrations/ALN.js");
 
 const logger = require("../utils/logger.js");
 
-// const hs = new HubSpot();
 const hs = new HubSpot();
 
 const aln = new ALN();
@@ -13,7 +12,6 @@ const router = express.Router();
 
 router.put("/records/:module/:id", (req, res) => {});
 
-// Route to get a HubSpot record
 router.get("/records/:module/:id", async (req, res) => {
   const module = req.params.module;
   const id = req.params.id;
