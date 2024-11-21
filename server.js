@@ -5,6 +5,8 @@ const logger = require("./utils/logger.js");
 const session = require("express-session");
 
 const app = express();
+app.set("trust proxy", true);
+
 app.use(express.json());
 
 app.use(
@@ -20,10 +22,22 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  const loggedIn = req.session.loggedIn || false;
+  const loggedIn = req.session?.loggedIn || false;
+  const allowedIp = "76.8.219.118"; // Replace with the correct IP you want to allow
+
+  // Normalize the IP address
+  let clientIp = req.ip;
+  if (clientIp === "::1") {
+    clientIp = "127.0.0.1"; // Convert IPv6 loopback to IPv4 for consistency
+  }
+
+  // Check if the IP is allowed
+  const isAllowedIp = clientIp === allowedIp || clientIp === "127.0.0.1";
 
   let dir;
-  if (loggedIn) {
+  if (!isAllowedIp) {
+    dir = "public/error";
+  } else if (loggedIn) {
     dir = "public/home";
   } else {
     dir = "public/login";
