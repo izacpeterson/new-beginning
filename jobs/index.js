@@ -12,8 +12,8 @@ function initializeJobs() {
   const hubSpotCron = new HubSpotCron();
   jobs[hubSpotCron.name] = hubSpotCron;
 
-  const zohoLocToHSLoc = new ZohoLocToHSLoc();
-  jobs[zohoLocToHSLoc.name] = zohoLocToHSLoc;
+  // const zohoLocToHSLoc = new ZohoLocToHSLoc();
+  // jobs[zohoLocToHSLoc.name] = zohoLocToHSLoc;
 }
 
 function startAllJobs() {
