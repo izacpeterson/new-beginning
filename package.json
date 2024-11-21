@@ -3,8 +3,19 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "nodemon app.js"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "*"
+    ],
+    "ignore": [
+      "public/*",
+      "logs/*",
+      "*.test.js",
+      "*.json"
+    ],
+    "ext": "js,json"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +24,7 @@
     "cron": "^3.2.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "lodash": "^4.17.21",
     "winston": "^3.17.0"
   }
 }

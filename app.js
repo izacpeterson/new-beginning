@@ -7,4 +7,5 @@ function startApp() {
 }
 startApp();
 
+require("./sandbox.js");
 require("./server.js");

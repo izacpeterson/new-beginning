@@ -1,6 +1,7 @@
-const logger = require('../utils/logger');
-const DemoCron = require('./DemoCron');
-const HubSpotCron = require('./HubSpotCron');
+const logger = require("../utils/logger");
+const DemoCron = require("./DemoCron");
+const HubSpotCron = require("./HubSpotCron");
+const ZohoLocToHSLoc = require("./ZohoToHubSpotLocationsCron");
 
 const jobs = {};
 
@@ -10,6 +11,9 @@ function initializeJobs() {
 
   const hubSpotCron = new HubSpotCron();
   jobs[hubSpotCron.name] = hubSpotCron;
+
+  const zohoLocToHSLoc = new ZohoLocToHSLoc();
+  jobs[zohoLocToHSLoc.name] = zohoLocToHSLoc;
 }
 
 function startAllJobs() {
@@ -20,12 +24,12 @@ function startAllJobs() {
       logger.warn(`${job.name} is already running.`);
     }
   });
-  logger.info('All cron jobs have been started.');
+  logger.info("All cron jobs have been started.");
 }
 
 function stopAllJobs() {
   Object.values(jobs).forEach((job) => job.stop());
-  logger.info('All cron jobs have been stopped.');
+  logger.info("All cron jobs have been stopped.");
 }
 
 function getAllJobs() {

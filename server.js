@@ -5,6 +5,7 @@ const logger = require("./utils/logger.js");
 
 const app = express();
 
+app.use(express.json());
 app.use(express.static("public"));
 
 function auth(req, res, next) {
@@ -31,10 +32,6 @@ function auth(req, res, next) {
 }
 
 // app.use(auth);
-
-// app.get('/', (req, res) => {
-//   res.send('Hello there');
-// });
 
 app.use("/api", routes);
 

@@ -1,29 +1,29 @@
-const express = require('express');
-const { startAllJobs, stopAllJobs, getAllJobs, getJobByName } = require('../jobs');
+const express = require("express");
+const { startAllJobs, stopAllJobs, getAllJobs, getJobByName } = require("../jobs");
 
 const router = express.Router();
 
-router.get('/crons', (req, res) => {
-  res.send('Crons');
+router.get("/", (req, res) => {
+  res.send("Crons");
 });
 
-router.get('/crons/stopall', (req, res) => {
+router.get("/stopall", (req, res) => {
   stopAllJobs();
-  res.send({ msg: 'Jobs Stopped' });
+  res.send({ msg: "Jobs Stopped" });
 });
 
-router.get('/crons/startall', (req, res) => {
+router.get("/startall", (req, res) => {
   startAllJobs();
-  res.send({ msg: 'Jobs Started' });
+  res.send({ msg: "Jobs Started" });
 });
 
-router.get('/crons/status', (req, res) => {
+router.get("/status", (req, res) => {
   const jobs = getAllJobs();
   const status = jobs.map((job) => job.status());
   res.json(status);
 });
 
-router.get('/crons/force/:name', (req, res) => {
+router.get("/force/:name", (req, res) => {
   const jobName = req.params.name;
   const job = getJobByName(jobName);
 

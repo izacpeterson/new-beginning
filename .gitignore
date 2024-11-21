@@ -2,3 +2,5 @@
 .env
 node_modules
 logs
+zohoLocations.json
+token.json
