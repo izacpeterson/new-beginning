@@ -36,7 +36,7 @@ app.use((req, res, next) => {
 
   let dir;
   if (!isAllowedIp) {
-    dir = "public/error";
+    dir = "public/login";
   } else if (loggedIn) {
     dir = "public/home";
   } else {
