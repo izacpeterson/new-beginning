@@ -1,17 +1,10 @@
-<!doctype html>
-<html lang="en" <html data-theme="corporate"></html>
-  <head >
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+  <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cron Jobs Dashboard</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css"
-      rel="stylesheet"
-      type="text/css"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-base-200">
@@ -20,99 +13,96 @@
 
       <!-- Buttons to start or stop all jobs -->
       <div class="mb-4">
-        <button
-          id="start-all"
-          class="btn btn-success mr-2"
-        >
-          Start All Jobs
-        </button>
-        <button
-          id="stop-all"
-          class="btn btn-error"
-        >
-          Stop All Jobs
-        </button>
+        <button id="start-all" class="btn btn-success mr-2">Start All Jobs</button>
+        <button id="stop-all" class="btn btn-error">Stop All Jobs</button>
       </div>
 
       <!-- Container for cron job cards -->
-      <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        id="cron-cards"
-      >
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="cron-cards">
         <!-- Cron job cards will be inserted here -->
       </div>
 
       <!-- Logs Section -->
       <div class="mt-8">
         <h2 class="text-2xl font-bold mb-4">Application Logs</h2>
-        <button
-          id="refresh-logs"
-          class="btn btn-secondary mb-4"
-        >
-          Refresh Logs
-        </button>
-        <pre
-          id="logs"
-          class="bg-gray-800 text-white p-4 rounded overflow-auto"
-          style="max-height: 400px"
-        ></pre>
+        <button id="refresh-logs" class="btn btn-secondary mb-4">Refresh Logs</button>
+        <pre id="logs" class="bg-gray-800 text-white p-4 rounded overflow-auto" style="max-height: 400px"></pre>
       </div>
     </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const cronCardsContainer = document.getElementById('cron-cards');
+      document.addEventListener("DOMContentLoaded", function () {
+        const cronCardsContainer = document.getElementById("cron-cards");
+
+        // Extract the API key from the URL query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const apiKey = urlParams.get("key");
+
+        if (!apiKey) {
+          alert("API key is missing in the URL. Please provide a valid key.");
+          return;
+        }
+
+        // Helper function to append the API key to API endpoints
+        function appendApiKey(url) {
+          const separator = url.includes("?") ? "&" : "?";
+          return `${url}${separator}key=${encodeURIComponent(apiKey)}`;
+        }
 
         // Fetch the cron status
         function fetchCronStatus() {
-          fetch('/api/crons/status')
+          fetch(appendApiKey("/api/crons/status"))
             .then((response) => response.json())
             .then((data) => {
-              cronCardsContainer.innerHTML = ''; // Clear existing cards
+              cronCardsContainer.innerHTML = ""; // Clear existing cards
 
               data.forEach((cron) => {
                 // Create card element
-                const card = document.createElement('div');
-                card.className = 'card shadow-xl bg-base-100';
+                const card = document.createElement("div");
+                card.className = "card shadow-xl bg-base-100";
 
                 // Card body
-                const cardBody = document.createElement('div');
-                cardBody.className = 'card-body';
+                const cardBody = document.createElement("div");
+                cardBody.className = "card-body";
 
                 // Card title
-                const title = document.createElement('h2');
-                title.className = 'card-title';
+                const title = document.createElement("h2");
+                title.className = "card-title";
                 title.textContent = cron.name;
 
                 // Status badge
-                const statusBadge = document.createElement('div');
-                statusBadge.className = 'badge';
-                statusBadge.textContent = cron.isRunning ? 'Running' : 'Stopped';
-                statusBadge.classList.add(cron.isRunning ? 'badge-success' : 'badge-error');
+                const statusBadge = document.createElement("div");
+                statusBadge.className = "badge";
+                statusBadge.textContent = cron.isRunning ? "Running" : "Stopped";
+                statusBadge.classList.add(cron.isRunning ? "badge-success" : "badge-error");
 
                 // Last execution
-                const lastExecution = document.createElement('p');
-                lastExecution.textContent = 'Last Execution: ' + (cron.lastExecution ? cron.lastExecution : 'Never');
+                const lastExecution = document.createElement("p");
+                lastExecution.textContent = "Last Execution: " + (cron.lastExecution ? cron.lastExecution : "Never");
 
                 // Next execution
-                const nextExecution = document.createElement('p');
-                nextExecution.textContent = 'Next Execution: ' + (cron.nextExecution ? cron.nextExecution : 'N/A');
+                const nextExecution = document.createElement("p");
+                nextExecution.textContent = "Next Execution: " + (cron.nextExecution ? cron.nextExecution : "N/A");
 
                 // Action buttons container
-                const buttonContainer = document.createElement('div');
-                buttonContainer.className = 'card-actions justify-end';
+                const buttonContainer = document.createElement("div");
+                buttonContainer.className = "card-actions justify-end";
 
                 // Force Execute button
-                const forceButton = document.createElement('button');
-                forceButton.className = 'btn btn-primary';
-                forceButton.textContent = 'Force Execute';
+                const forceButton = document.createElement("button");
+                forceButton.className = "btn btn-primary";
+                forceButton.textContent = "Force Execute";
 
-                forceButton.addEventListener('click', function () {
-                  fetch('/api/crons/force/' + cron.name)
+                forceButton.addEventListener("click", function () {
+                  fetch(appendApiKey("/api/crons/force/" + encodeURIComponent(cron.name)))
                     .then((response) => response.json())
                     .then((data) => {
                       alert(data.message);
                       fetchCronStatus(); // Refresh the cron status
+                    })
+                    .catch((error) => {
+                      console.error("Error forcing cron execution:", error);
+                      alert("Failed to force execute the cron job.");
                     });
                 });
 
@@ -126,40 +116,56 @@
                 card.appendChild(cardBody);
                 cronCardsContainer.appendChild(card);
               });
+            })
+            .catch((error) => {
+              console.error("Error fetching cron status:", error);
+              alert("Failed to fetch cron status.");
             });
         }
 
         // Event listeners for Start All and Stop All buttons
-        document.getElementById('start-all').addEventListener('click', function () {
-          fetch('/api/crons/startall')
+        document.getElementById("start-all").addEventListener("click", function () {
+          fetch(appendApiKey("/api/crons/startall"))
             .then((response) => response.json())
             .then((data) => {
               alert(data.msg);
               fetchCronStatus();
+            })
+            .catch((error) => {
+              console.error("Error starting all crons:", error);
+              alert("Failed to start all cron jobs.");
             });
         });
 
-        document.getElementById('stop-all').addEventListener('click', function () {
-          fetch('/api/crons/stopall')
+        document.getElementById("stop-all").addEventListener("click", function () {
+          fetch(appendApiKey("/api/crons/stopall"))
             .then((response) => response.json())
             .then((data) => {
               alert(data.msg);
               fetchCronStatus();
+            })
+            .catch((error) => {
+              console.error("Error stopping all crons:", error);
+              alert("Failed to stop all cron jobs.");
             });
         });
 
         // Fetch logs
         function fetchLogs() {
-          fetch('/api/logs')
+          fetch(appendApiKey("/api/logs"))
             .then((response) => response.text())
             .then((data) => {
-              const logsElement = document.getElementById('logs');
+              const logsElement = document.getElementById("logs");
               logsElement.textContent = data;
+            })
+            .catch((error) => {
+              console.error("Error fetching logs:", error);
+              alert("Failed to fetch logs.");
             });
         }
 
         // Event listener for Refresh Logs button
-        document.getElementById('refresh-logs').addEventListener('click', function () {
+        document.getElementById("refresh-logs").addEventListener("click", function () {
           fetchLogs();
         });
 
@@ -167,7 +173,7 @@
         fetchCronStatus();
         fetchLogs();
 
-        // Optional: Polling to update cron status and logs every 30 seconds
+        // Optional: Polling to update cron status and logs every 10 seconds
         setInterval(fetchCronStatus, 10000);
         setInterval(fetchLogs, 10000);
       });

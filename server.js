@@ -5,8 +5,10 @@ const logger = require("./utils/logger.js");
 
 const app = express();
 
+app.use(auth);
+
 app.use(express.json());
-app.use(express.static("public"));
+app.use("/", express.static("public"));
 
 function auth(req, res, next) {
   // const clientIp = req.ip || req.connection.remoteAddress;
@@ -30,8 +32,6 @@ function auth(req, res, next) {
     res.send({ msg: "NO AUTH" });
   }
 }
-
-app.use(auth);
 
 app.use("/api", routes);
 
