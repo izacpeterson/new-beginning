@@ -9,20 +9,20 @@ app.use(express.json());
 app.use(express.static("public"));
 
 function auth(req, res, next) {
-  const clientIp = req.ip || req.connection.remoteAddress;
+  // const clientIp = req.ip || req.connection.remoteAddress;
 
-  // Normalize the IP address (Express may return '::1' for IPv6 localhost)
-  const normalizedIp = clientIp.replace("::ffff:", "");
+  // // Normalize the IP address (Express may return '::1' for IPv6 localhost)
+  // const normalizedIp = clientIp.replace("::ffff:", "");
 
-  // Define localhost IP addresses
-  const localhostIps = ["127.0.0.1", "::1"];
+  // // Define localhost IP addresses
+  // const localhostIps = ["127.0.0.1", "::1"];
 
-  // Check if the request is from localhost
-  if (localhostIps.includes(normalizedIp)) {
-    next();
-    return;
-  }
-  if (req.query.key == "izac") {
+  // // Check if the request is from localhost
+  // if (localhostIps.includes(normalizedIp)) {
+  //   next();
+  //   return;
+  // }
+  if (req.query.key == process.env.API_KEY) {
     next();
     return;
   } else {
@@ -31,7 +31,7 @@ function auth(req, res, next) {
   }
 }
 
-// app.use(auth);
+app.use(auth);
 
 app.use("/api", routes);
 
