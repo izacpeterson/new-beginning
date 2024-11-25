@@ -15,7 +15,16 @@ router.use("/sync", syncRoutes);
 router.use("/auth", authRoutes);
 
 router.get("/", (req, res) => {
-  res.send("Hello, world");
+  res.setHeader("Content-Type", "text/plain");
+  let text = `
+  Routes:
+  /api/hubspot
+  /api/crons
+  /api/logs
+  /api/sync
+  /api/auth
+  `;
+  res.send(text);
 });
 
 module.exports = router;
