@@ -35,9 +35,7 @@ app.use((req, res, next) => {
   const isAllowedIp = clientIp === allowedIp || clientIp === "127.0.0.1";
 
   let dir;
-  if (!isAllowedIp) {
-    dir = "public/login";
-  } else if (loggedIn) {
+  if (loggedIn) {
     dir = "public/home";
   } else {
     dir = "public/login";
@@ -51,19 +49,6 @@ app.use("/api", auth);
 // app.use("/", express.static("public"));
 
 function auth(req, res, next) {
-  // const clientIp = req.ip || req.connection.remoteAddress;
-
-  // // Normalize the IP address (Express may return '::1' for IPv6 localhost)
-  // const normalizedIp = clientIp.replace("::ffff:", "");
-
-  // // Define localhost IP addresses
-  // const localhostIps = ["127.0.0.1", "::1"];
-
-  // // Check if the request is from localhost
-  // if (localhostIps.includes(normalizedIp)) {
-  //   next();
-  //   return;
-  // }
   if (req.query.key == process.env.API_KEY || req.body.key == process.env.API_KEY || req.session.loggedIn) {
     next();
     return;
