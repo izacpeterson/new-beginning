@@ -1,6 +1,7 @@
 // jobs/BaseCronJob.js
 
 const { CronJob } = require("cron");
+const cronParser = require("cron-parser");
 const logger = require("../utils/logger");
 
 class BaseCronJob {
@@ -76,14 +77,23 @@ class BaseCronJob {
   status() {
     const isRunning = this.isRunning();
     const lastExecution = this.lastExecutionTime;
-    const nextExecution = isRunning && this.job ? this.job.nextDates() : null;
+    let nextExecution = null;
+
+    if (isRunning) {
+      try {
+        const interval = cronParser.parseExpression(this.cronTime);
+        nextExecution = interval.next().toString();
+      } catch (error) {
+        logger.error(`${this.name} failed to compute next execution time: ${error.message}`);
+      }
+    }
 
     return {
       name: this.name,
-      isRunning: isRunning,
+      isRunning,
       cronTime: this.cronTime,
       lastExecution: lastExecution ? lastExecution.toLocaleString() : null,
-      nextExecution: nextExecution ? nextExecution.toLocaleString() : null,
+      nextExecution: new Date(nextExecution).toLocaleString() || "Not available",
     };
   }
 }

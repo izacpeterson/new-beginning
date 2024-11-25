@@ -1,4 +1,13 @@
 async function sandbox() {
+  const cronParser = require("cron-parser");
+
+  try {
+    const interval = cronParser.parseExpression("0 */5 * * * *");
+    console.log("Next execution (cron-parser):", interval.next().toString());
+  } catch (error) {
+    console.error("Invalid cron expression:", error.message);
+  }
+
   return;
 
   const record = await zoho.getRecord("Locations", "2249247000214819256");
