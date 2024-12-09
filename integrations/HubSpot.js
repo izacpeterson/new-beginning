@@ -1,8 +1,8 @@
 /* eslint-disable class-methods-use-this */
-const logger = require("../utils/logger.js");
-const { hsApiKey } = require("../config.js");
+import logger from "../utils/logger.js";
+import { hsApiKey } from "../config.js";
 
-class HubSpot {
+export default class HubSpot {
   constructor() {
     this.baseUrl = "https://api.hubapi.com/crm/v3";
     this.token = hsApiKey;
@@ -19,15 +19,23 @@ class HubSpot {
 
       const data = await response.json();
 
+      if (data.status == "error") {
+        throw `${data.message}`;
+      }
+
       return data;
     } catch (error) {
       logger.error(`Unable to get hubspot record. ${module}:${id} - ${error} `);
     }
   }
 
-  async updateRecord(module, id, updates) {
-    const url = `${this.baseUrl}/objects/${module}/${id}`;
+  async updateRecord(module, id, updates, idProperty = null) {
+    let url = `${this.baseUrl}/objects/${module}/${id}`;
+    if (idProperty) {
+      url = `${url}?idProperty=${idProperty}`;
+    }
     try {
+      console.log(url);
       const response = await fetch(url, {
         method: "PATCH",
         headers: {
@@ -110,14 +118,14 @@ class HubSpot {
 
   async getModuleProperties(module) {
     const url = `${this.baseUrl}/properties/${module}`;
-
+    console.log(url);
     try {
       const response = await fetch(url, {
         headers: {
           authorization: `Bearer ${this.token}`,
         },
       });
-
+      console.log(response);
       const data = await response.json();
 
       let propertyArray = [];
@@ -266,6 +274,38 @@ class HubSpot {
       throw error; // Re-throw the error after logging
     }
   }
-}
 
-module.exports = HubSpot;
+  async associateObjects(fromObjectType, fromObjectId, toObjectType, toObjectId, associationCategory = "HUBSPOT_DEFINED", associationTypeId = 0) {
+    const url = `${this.baseUrl}/objects/${fromObjectType}/${fromObjectId}/associations/${toObjectType}/${toObjectId}`;
+
+    const data = [
+      {
+        associationCategory,
+        associationTypeId,
+      },
+    ];
+
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        logger.error(`Failed to associate objects. Status: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(`Failed to associate objects. Status: ${response.status}`);
+      }
+
+      const responseData = await response.json();
+      return responseData;
+    } catch (error) {
+      logger.error(`Error associating objects: ${error.message}`);
+      throw error;
+    }
+  }
+}

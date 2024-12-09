@@ -1,4 +1,4 @@
-require("dotenv").config();
+import "dotenv/config";
 
 let hsApiKey = "";
 if (process.env.DEV == "true") {
@@ -11,4 +11,4 @@ let alnApiKey = process.env.ALN_API_KEY;
 
 let port = process.env.PORT;
 
-module.exports = { hsApiKey, alnApiKey, port };
+export { hsApiKey, alnApiKey, port };

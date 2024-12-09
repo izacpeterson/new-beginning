@@ -1,15 +1,15 @@
-const BaseCronJob = require("./BaseCronJob");
-const logger = require("../utils/logger");
-const HubSpot = require("../integrations/HubSpot.js");
-const ALN = require("../integrations/ALN.js");
+import BaseCronJob from "./BaseCronJob.js";
+import logger from "../utils/logger.js";
+import HubSpot from "../integrations/HubSpot.js";
+import ALN from "../integrations/ALN.js";
 
 const hs = new HubSpot();
 const aln = new ALN();
 
-class HubSpotCron extends BaseCronJob {
+export default class HubSpotCron extends BaseCronJob {
   constructor() {
     super("HubSpotAlnCron");
-    this.cronTime = "0 9-17 * * 1-5"; // Define the cron time inside the class
+    this.cronTime = "0 9-17 * * 1-5";
   }
 
   async execute() {
@@ -114,5 +114,3 @@ class HubSpotCron extends BaseCronJob {
     }
   }
 }
-
-module.exports = HubSpotCron;

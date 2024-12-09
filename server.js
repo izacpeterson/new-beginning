@@ -1,12 +1,15 @@
-const express = require("express");
-const routes = require("./routes");
-const { port } = require("./config.js");
-const logger = require("./utils/logger.js");
-const session = require("express-session");
+import express from "express";
+import routes from "./routes/index.js";
+import { port } from "./config.js";
+import logger from "./utils/logger.js";
+import session from "express-session";
+import * as myauth from "./utils/auth.js";
+import cors from "cors";
 
 const app = express();
-app.set("trust proxy", true);
+app.set("trust proxy", true); // Ensure Express trusts proxy headers for correct IP resolution
 
+app.use(cors());
 app.use(express.json());
 
 app.use(
@@ -21,42 +24,46 @@ app.use(
   })
 );
 
-app.use((req, res, next) => {
-  const loggedIn = req.session?.loggedIn || false;
-  const allowedIp = "76.8.219.118"; // Replace with the correct IP you want to allow
+// Middleware to serve static files based on authentication
+// app.use((req, res, next) => {
+//   const isDevMode = process.env.DEV === "true";
+//   const clientIp = req.ip === "::1" || req.ip === "::ffff:127.0.0.1" ? "127.0.0.1" : req.ip;
 
-  // Normalize the IP address
-  let clientIp = req.ip;
-  if (clientIp === "::1") {
-    clientIp = "127.0.0.1"; // Convert IPv6 loopback to IPv4 for consistency
+//   const loggedIn = req.session?.loggedIn || isDevMode;
+
+//   const staticDir = loggedIn ? "public/home" : "public/login";
+//   express.static(staticDir)(req, res, next);
+// });
+
+// Define the work IP address
+const WORK_IP = process.env.WORK_IP; // Replace with your work IP address
+
+// Middleware for API authentication
+app.use("/api", async (req, res, next) => {
+  const isDevMode = process.env.DEV === "true";
+  const clientIp = req.ip === "::1" || req.ip === "::ffff:127.0.0.1" ? "127.0.0.1" : req.ip;
+  const isWorkIp = clientIp === WORK_IP;
+
+  console.log(`Client IP: ${clientIp}, Work IP: ${isWorkIp}, Dev Mode: ${isDevMode}`);
+
+  if (isDevMode || isWorkIp) {
+    console.log("Access granted: Development mode or work IP.");
+    return next();
   }
 
-  // Check if the IP is allowed
-  const isAllowedIp = clientIp === allowedIp || clientIp === "127.0.0.1";
+  const apiKey = req.query.key || req.body.key;
+  console.log(`Received API Key: ${apiKey}`);
 
-  let dir;
-  if (loggedIn) {
-    dir = "public/home";
-  } else {
-    dir = "public/login";
-  }
+  const isAuthorized = req.session?.loggedIn || apiKey === process.env.API_KEY || (apiKey && (await myauth.checkApiKey(apiKey)));
 
-  express.static(dir)(req, res, next);
-});
-
-app.use("/api", auth);
-
-// app.use("/", express.static("public"));
-
-function auth(req, res, next) {
-  if (req.query.key == process.env.API_KEY || req.body.key == process.env.API_KEY || req.session.loggedIn) {
+  if (isAuthorized) {
+    console.log("Access granted: Authorized.");
     next();
-    return;
   } else {
-    // logger.error('Unauthorized request attempted');
-    res.send({ msg: "NO AUTH" });
+    console.error("Access denied: Unauthorized request.");
+    res.status(401).json({ msg: "NO AUTH" });
   }
-}
+});
 
 app.use("/api", routes);
 
@@ -64,4 +71,4 @@ app.listen(port, () => {
   logger.info(`Server listening on port ${port}`);
 });
 
-module.exports = app;
+export { app };

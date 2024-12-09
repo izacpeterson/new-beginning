@@ -1,5 +1,5 @@
-const express = require("express");
-const { startAllJobs, stopAllJobs, getAllJobs, getJobByName } = require("../jobs");
+import express from "express";
+import { startAllJobs, stopAllJobs, getAllJobs, getJobByName } from "../jobs/index.js";
 
 const router = express.Router();
 
@@ -39,4 +39,4 @@ router.get("/force/:name", (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

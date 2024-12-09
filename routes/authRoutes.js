@@ -1,12 +1,13 @@
-const express = require("express");
+import express from "express";
+import path from "path";
+import session from "express-session";
+
 const router = express.Router();
-const path = require("path");
-const session = require("express-session");
 
 router.post("/login", (req, res) => {
   req.session.loggedIn = true;
-
+  console.log("USER LOG IN");
   res.send({ success: true });
 });
 
-module.exports = router;
+export default router;

@@ -1,16 +1,28 @@
-const express = require("express");
+import express from "express";
+import path from "path";
+import fs from "fs";
+
 const router = express.Router();
-const path = require("path");
-const fs = require("fs");
 
 router.get("/", (req, res) => {
-  const logFilePath = path.join(__dirname, "..", "logs", "app.log");
+  const logFilePath = path.resolve("../logs/app.log");
 
-  let text = fs.readFileSync(path.join(__dirname, "..", "logs", "app.log"), "utf8");
+  try {
+    const fileStream = fs.createReadStream(logFilePath, { encoding: "utf-8" });
 
-  // Send the text as a JSON response
-  res.setHeader("Content-Type", "text/plain");
-  res.send(text);
+    res.setHeader("Content-Type", "text/plain");
+
+    // Pipe the file stream directly to the response
+    fileStream.pipe(res);
+
+    fileStream.on("error", (err) => {
+      console.error("Error reading log file stream:", err.message);
+      res.status(500).send("Error reading log file.");
+    });
+  } catch (error) {
+    console.error("Error handling log file request:", error.message);
+    res.status(500).send("Error handling log file.");
+  }
 });
 
-module.exports = router;
+export default router;

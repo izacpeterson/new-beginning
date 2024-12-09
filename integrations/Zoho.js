@@ -1,34 +1,93 @@
-const fs = require("fs");
+import sqlite3 from "sqlite3";
+import "dotenv/config";
 
-class Zoho {
-  constructor(clientId, clientSecret) {
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
+sqlite3.verbose(); // Ensures verbose mode for sqlite3
+
+export default class Zoho {
+  constructor() {
+    this.clientId = process.env.ZOHO_CLIENT_ID;
+    this.clientSecret = process.env.ZOHO_CLIENT_SECRET;
     this.token = null;
+
+    // Initialize the database
+    this.db = new sqlite3.Database("db.db", (err) => {
+      if (err) {
+        console.error("Could not connect to database", err);
+      } else {
+        this.initializeDatabase();
+      }
+    });
+  }
+
+  initializeDatabase() {
+    // Create the tokens table if it doesn't exist
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS tokens (
+        id INTEGER PRIMARY KEY,
+        access_token TEXT,
+        refresh_token TEXT,
+        expires_in INTEGER,
+        expires_at TEXT
+      )
+    `;
+
+    this.db.run(createTableQuery, (err) => {
+      if (err) {
+        console.error("Error creating tokens table", err);
+      }
+    });
   }
 
   async init() {
-    await this.loadTokensFromFile();
+    await this.loadTokensFromDatabase();
     if (!this.token || this.isTokenExpired()) {
       await this.refreshAccessToken();
     }
   }
 
-  async loadTokensFromFile() {
-    try {
-      const data = fs.readFileSync("token.json", "utf-8");
-      this.token = JSON.parse(data);
-    } catch (err) {
-      console.error("Error loading token from file:", err);
-    }
+  loadTokensFromDatabase() {
+    return new Promise((resolve, reject) => {
+      const selectQuery = "SELECT * FROM tokens WHERE id = 1";
+      this.db.get(selectQuery, (err, row) => {
+        if (err) {
+          console.error("Error loading token from database:", err);
+          resolve();
+        } else {
+          if (row) {
+            this.token = {
+              access_token: row.access_token,
+              refresh_token: row.refresh_token,
+              expires_in: row.expires_in,
+              expires_at: new Date(row.expires_at),
+            };
+          }
+          resolve();
+        }
+      });
+    });
   }
 
-  saveTokensToFile() {
-    try {
-      fs.writeFileSync("token.json", JSON.stringify(this.token, null, 2));
-    } catch (err) {
-      console.error("Error saving token to file:", err);
-    }
+  saveTokensToDatabase() {
+    return new Promise((resolve, reject) => {
+      const upsertQuery = `
+        INSERT INTO tokens (id, access_token, refresh_token, expires_in, expires_at)
+        VALUES (1, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          access_token = excluded.access_token,
+          refresh_token = excluded.refresh_token,
+          expires_in = excluded.expires_in,
+          expires_at = excluded.expires_at
+      `;
+
+      this.db.run(upsertQuery, [this.token.access_token, this.token.refresh_token, this.token.expires_in, this.token.expires_at.toISOString()], function (err) {
+        if (err) {
+          console.error("Error saving token to database:", err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   isTokenExpired() {
@@ -56,8 +115,8 @@ class Zoho {
           expires_in: data.expires_in,
           expires_at: new Date(Date.now() + data.expires_in * 1000),
         };
-        this.saveTokensToFile();
-        console.log("Access and refresh tokens have been saved to token.json");
+        await this.saveTokensToDatabase();
+        console.log("Access and refresh tokens have been saved to the database");
       } else {
         console.error("Failed to obtain access token:", data);
       }
@@ -87,7 +146,7 @@ class Zoho {
         this.token.access_token = data.access_token;
         this.token.expires_in = data.expires_in;
         this.token.expires_at = new Date(Date.now() + data.expires_in * 1000);
-        this.saveTokensToFile();
+        await this.saveTokensToDatabase();
       } else {
         console.error("Failed to refresh access token:", data);
       }
@@ -110,11 +169,14 @@ class Zoho {
     }
 
     const url = `https://www.zohoapis.com/crm/v3/${module}/${id}`;
+    console.log(url);
     try {
       const response = await fetch(url, {
         method: "GET",
         headers: this.getAuthHeaders(),
       });
+
+      console.log(response);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -125,6 +187,75 @@ class Zoho {
       return await response.json();
     } catch (err) {
       console.error("Error fetching record:", err);
+    }
+  }
+
+  async getRelatedRecord(module, id, relatedModule, fields = []) {
+    if (!module || !id || !relatedModule) {
+      console.error("Module and ID are required");
+      return;
+    }
+
+    fields.join(",");
+
+    const url = `https://www.zohoapis.com/crm/v3/${module}/${id}/${relatedModule}?fields=${fields}`;
+    console.log(url);
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      });
+
+      console.log(response);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error fetching record:", errorData);
+        return;
+      }
+
+      return await response.json();
+    } catch (err) {
+      console.error("Error fetching record:", err);
+    }
+  }
+
+  async updateRecord(module, id, data) {
+    if (!module || !id || !data) {
+      console.error("Module, ID, and data are required");
+      return;
+    }
+
+    // Refresh the access token if it's expired
+    if (this.isTokenExpired()) {
+      await this.refreshAccessToken();
+    }
+
+    const url = `https://www.zohoapis.com/crm/v3/${module}/${id}`;
+
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          ...this.getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: [data],
+          trigger: [], // Add this line to prevent workflows from triggering
+        }),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error("Error updating record:", responseData);
+        return responseData;
+      }
+
+      return responseData;
+    } catch (err) {
+      console.error("Error updating record:", err);
     }
   }
 
@@ -193,6 +324,23 @@ class Zoho {
     console.log(`Total records fetched: ${allRecords.length}`);
     return allRecords;
   }
-}
 
-module.exports = Zoho;
+  async queryRecords(query) {
+    const url = `https://www.zohoapis.com/crm/v7/coql`;
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          select_query: query,
+        }),
+      });
+
+      let data = await response.json();
+      return data;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}

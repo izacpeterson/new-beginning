@@ -1,21 +1,13 @@
-const express = require("express");
+import express from "express";
+import logger from "../utils/logger.js";
+import Zoho from "../integrations/Zoho.js";
+import HubSpot from "../integrations/HubSpot.js";
+
 const router = express.Router();
 
-const logger = require("../utils/logger.js");
-
-const Zoho = require("../integrations/Zoho.js");
-const HubSpot = require("../integrations/HubSpot.js");
-
-//handle new zoho location
-router.post("/zohotohubspot/location", async (req, res) => {
-  const hs = new HubSpot();
-
-  const location = req.body.location;
-  const account = req.body.account;
-
-  //   console.log(account);
-
-  let hs_loc = {
+// Helper function to map Zoho location data to HubSpot format
+function mapZohoToHubSpotLocation(location) {
+  return {
     zoho_location_id: location.id,
     location_name: location.Name,
     aln_property_id: location.ALN_ID,
@@ -35,32 +27,107 @@ router.post("/zohotohubspot/location", async (req, res) => {
     training_date: location.Training_Date,
     acquisition_date: location.Acquisition_Date,
   };
+}
 
-  if (location.HubSpot_Location_ID !== null && location.HubSpot_Location_ID !== "") {
-    logger.info("Received request to update a location");
+function mapHubSpotToZohoLocation(hubspotLocation) {
+  return {
+    id: hubspotLocation.zoho_location_id?.value,
+    Name: hubspotLocation.location_name?.value,
+    ALN_ID: hubspotLocation.aln_property_id?.value,
+    Location_City: hubspotLocation.city?.value,
+    Location_Country: hubspotLocation.country?.value,
+    // Go_Live_Date: hubspotLocation.go_live_date?.value,
+    Integration_Date: hubspotLocation.integration_date?.value,
+    Location_Type: hubspotLocation.location_sector?.value,
+    Location_Status: hubspotLocation.location_status?.value,
+    Location_State: hubspotLocation.state_region?.value,
+    // Buildout_Date: hubspotLocation.buildout_date?.value,
+    // Monitoring_Complete_Date: hubspotLocation.monitoring_complete_date?.value,
+    Location_Phone: hubspotLocation.phone?.value,
+    Location_Code: hubspotLocation.postal_code?.value,
+    Property_Units: hubspotLocation.property_units?.value,
+    // QA_Date: hubspotLocation.qa_date?.value,
+    // Training_Date: hubspotLocation.training_date?.value,
+    // Acquisition_Date: hubspotLocation.acquisition_date?.value,
+  };
+}
 
-    try {
-      let result = await hs.updateRecord("locations", parseInt(location.HubSpot_Location_ID), hs_loc);
-      console.log(result);
+// Helper function to associate a location with a company in HubSpot
+async function associateLocationWithCompany(hs, locationId, companyId) {
+  try {
+    await hs.associateObjects("locations", locationId, "companies", companyId, "USER_DEFINED", "17");
+    logger.info(`Successfully associated location ${locationId} with company ${companyId}`);
+  } catch (error) {
+    logger.error(`Error associating location ${locationId} with company ${companyId}: ${error.message}`);
+    throw error;
+  }
+}
 
-      logger.info("Successfully updated location in HubSpot");
+// Handle new Zoho location
+router.post("/zohotohubspot/location", async (req, res) => {
+  const { location, account } = req.body;
 
-      res.send({ msg: "Zoho Location update processed", result: result });
-    } catch (error) {}
-  } else {
-    logger.info("Received request to create a new location");
+  const hs = new HubSpot();
+  const zoho = new Zoho();
+  logger.info("Processing location from Zoho", { locationId: location.id });
 
-    try {
-      let result = await hs.createRecord("locations", hs_loc);
-      console.log(result);
+  const hsLoc = mapZohoToHubSpotLocation(location);
 
-      logger.info("Successfully created new location in HubSpot");
+  try {
+    await zoho.init();
 
-      res.send({ msg: "new", id: result.id, result: result });
-    } catch (error) {
-      logger.warn("Error in creating new location in HubSpot");
+    let result;
+
+    if (location.HubSpot_Location_Id) {
+      // Update existing location
+      logger.info("Updating existing location in HubSpot", {
+        hubSpotLocationId: location.HubSpot_Location_Id,
+      });
+      result = await hs.updateRecord("locations", `${location.id}`, hsLoc, "zoho_location_id");
+      logger.info("Successfully updated location in HubSpot", { result });
+    } else {
+      // Create new location
+      logger.info("Creating new location in HubSpot");
+      result = await hs.createRecord("locations", hsLoc);
+      logger.info("Successfully created new location in HubSpot", { result });
     }
+
+    // Associate location with company
+    await associateLocationWithCompany(hs, result.id || location.HubSpot_Location_Id, account.HubSpot_Company_Id);
+
+    await zoho.updateRecord("Locations", location.id, {
+      HubSpot_Location_Id: result.id || location.HubSpot_Location_Id,
+    });
+
+    res.send({ message: "Location processed successfully", result });
+  } catch (error) {
+    logger.error("Error processing location", { error: error.message });
+    res.status(500).send({ error: "An error occurred while processing the location" });
   }
 });
 
-module.exports = router;
+router.post("/hubspottozoho/location", async (req, res) => {
+  const zoho = new Zoho();
+  try {
+    await zoho.init();
+
+    const { properties: location } = req.body;
+
+    // const updateData = {
+    //   Name: location.location_name.value,
+    // };
+
+    const updateData = mapHubSpotToZohoLocation(location);
+
+    const result = await zoho.updateRecord("Locations", location.zoho_location_id.value, updateData);
+
+    logger.info("Successfully updated location in Zoho", { result });
+
+    res.send({ message: "Location updated successfully", result });
+  } catch (error) {
+    logger.error("Error updating location in Zoho", { error: error.message });
+    res.status(500).send({ error: "An error occurred while updating the location in Zoho" });
+  }
+});
+
+export default router;

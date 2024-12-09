@@ -1,7 +1,7 @@
-const logger = require("../utils/logger");
-const DemoCron = require("./DemoCron");
-const HubSpotCron = require("./HubSpotCron");
-const ZohoLocToHSLoc = require("./ZohoToHubSpotLocationsCron");
+import logger from "../utils/logger.js";
+import DemoCron from "./DemoCron.js";
+import HubSpotCron from "./HubSpotCron.js";
+import RotateApiKey from "./RotateApiKeyCron.js";
 
 const jobs = {};
 
@@ -12,8 +12,8 @@ function initializeJobs() {
   const hubSpotCron = new HubSpotCron();
   jobs[hubSpotCron.name] = hubSpotCron;
 
-  // const zohoLocToHSLoc = new ZohoLocToHSLoc();
-  // jobs[zohoLocToHSLoc.name] = zohoLocToHSLoc;
+  const apiKeyCron = new RotateApiKey();
+  jobs[apiKeyCron.name] = apiKeyCron;
 }
 
 function startAllJobs() {
@@ -43,4 +43,4 @@ function getJobByName(name) {
 // Initialize jobs when the module is loaded
 initializeJobs();
 
-module.exports = { startAllJobs, stopAllJobs, getAllJobs, getJobByName };
+export { startAllJobs, stopAllJobs, getAllJobs, getJobByName };

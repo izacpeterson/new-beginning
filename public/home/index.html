@@ -6,177 +6,128 @@
     <title>Cron Jobs Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include Alpine.js -->
+    <script src="https://unpkg.com/alpinejs" defer></script>
   </head>
-  <body class="bg-base-200">
+  <body class="bg-base-200" x-data="cronDashboard()" x-init="init()">
     <div class="container mx-auto p-4">
       <h1 class="text-3xl font-bold mb-4">Opiniion Cron Dashboard</h1>
 
       <!-- Buttons to start or stop all jobs -->
       <div class="mb-4">
-        <button id="start-all" class="btn btn-success mr-2">Start All Jobs</button>
-        <button id="stop-all" class="btn btn-error">Stop All Jobs</button>
+        <button @click="startAll" class="btn btn-success mr-2">Start All Jobs</button>
+        <button @click="stopAll" class="btn btn-error">Stop All Jobs</button>
       </div>
 
       <!-- Container for cron job cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="cron-cards">
-        <!-- Cron job cards will be inserted here -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <template x-for="cron in crons" :key="cron.name">
+          <div class="card shadow-xl bg-base-100">
+            <div class="card-body">
+              <h2 class="card-title" x-text="cron.name"></h2>
+              <div class="badge" :class="cron.isRunning ? 'badge-success' : 'badge-error'" x-text="cron.isRunning ? 'Running' : 'Stopped'"></div>
+              <p x-text="'Last Execution: ' + (cron.lastExecution ? cron.lastExecution : 'Never')"></p>
+              <p x-text="'Next Execution: ' + (cron.nextExecution ? cron.nextExecution : 'N/A')"></p>
+              <div class="card-actions justify-end">
+                <button class="btn btn-primary" @click="forceExecute(cron.name)">Force Execute</button>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Logs Section -->
       <div class="mt-8">
         <h2 class="text-2xl font-bold mb-4">Application Logs</h2>
-        <button id="refresh-logs" class="btn btn-secondary mb-4">Refresh Logs</button>
-        <pre id="logs" class="bg-gray-800 text-white p-4 rounded overflow-auto" style="max-height: 400px"></pre>
+        <button @click="fetchLogs" class="btn btn-secondary mb-4">Refresh Logs</button>
+        <pre class="bg-base-100 p-4 rounded overflow-auto" style="max-height: 400px" x-text="logs"></pre>
       </div>
     </div>
 
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const cronCardsContainer = document.getElementById("cron-cards");
+      function cronDashboard() {
+        return {
+          crons: [],
+          logs: "",
+          apiKey: new URLSearchParams(window.location.search).get("key"),
 
-        // Extract the API key from the URL query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const apiKey = urlParams.get("key");
+          init() {
+            this.fetchCronStatus();
+            this.fetchLogs();
+            // Poll every 10 seconds
+            setInterval(() => this.fetchCronStatus(), 10000);
+            setInterval(() => this.fetchLogs(), 10000);
+          },
 
-        // if (!apiKey) {
-        //   alert("API key is missing in the URL. Please provide a valid key.");
-        //   return;
-        // }
+          appendApiKey(url) {
+            const separator = url.includes("?") ? "&" : "?";
+            return `${url}${separator}key=${encodeURIComponent(this.apiKey)}`;
+          },
 
-        // Helper function to append the API key to API endpoints
-        function appendApiKey(url) {
-          const separator = url.includes("?") ? "&" : "?";
-          return `${url}${separator}key=${encodeURIComponent(apiKey)}`;
-        }
-
-        // Fetch the cron status
-        function fetchCronStatus() {
-          fetch(appendApiKey("/api/crons/status"))
-            .then((response) => response.json())
-            .then((data) => {
-              cronCardsContainer.innerHTML = ""; // Clear existing cards
-
-              data.forEach((cron) => {
-                // Create card element
-                const card = document.createElement("div");
-                card.className = "card shadow-xl bg-base-100";
-
-                // Card body
-                const cardBody = document.createElement("div");
-                cardBody.className = "card-body";
-
-                // Card title
-                const title = document.createElement("h2");
-                title.className = "card-title";
-                title.textContent = cron.name;
-
-                // Status badge
-                const statusBadge = document.createElement("div");
-                statusBadge.className = "badge";
-                statusBadge.textContent = cron.isRunning ? "Running" : "Stopped";
-                statusBadge.classList.add(cron.isRunning ? "badge-success" : "badge-error");
-
-                // Last execution
-                const lastExecution = document.createElement("p");
-                lastExecution.textContent = "Last Execution: " + (cron.lastExecution ? cron.lastExecution : "Never");
-
-                // Next execution
-                const nextExecution = document.createElement("p");
-                nextExecution.textContent = "Next Execution: " + (cron.nextExecution ? cron.nextExecution : "N/A");
-
-                // Action buttons container
-                const buttonContainer = document.createElement("div");
-                buttonContainer.className = "card-actions justify-end";
-
-                // Force Execute button
-                const forceButton = document.createElement("button");
-                forceButton.className = "btn btn-primary";
-                forceButton.textContent = "Force Execute";
-
-                forceButton.addEventListener("click", function () {
-                  fetch(appendApiKey("/api/crons/force/" + encodeURIComponent(cron.name)))
-                    .then((response) => response.json())
-                    .then((data) => {
-                      alert(data.message);
-                      fetchCronStatus(); // Refresh the cron status
-                    })
-                    .catch((error) => {
-                      console.error("Error forcing cron execution:", error);
-                      alert("Failed to force execute the cron job.");
-                    });
-                });
-
-                // Append elements
-                cardBody.appendChild(title);
-                cardBody.appendChild(statusBadge);
-                cardBody.appendChild(lastExecution);
-                cardBody.appendChild(nextExecution);
-                buttonContainer.appendChild(forceButton);
-                cardBody.appendChild(buttonContainer);
-                card.appendChild(cardBody);
-                cronCardsContainer.appendChild(card);
+          fetchCronStatus() {
+            fetch(this.appendApiKey("/api/crons/status"))
+              .then((response) => response.json())
+              .then((data) => {
+                this.crons = data;
+              })
+              .catch((error) => {
+                console.error("Error fetching cron status:", error);
+                alert("Failed to fetch cron status.");
               });
-            })
-            .catch((error) => {
-              console.error("Error fetching cron status:", error);
-              alert("Failed to fetch cron status.");
-            });
-        }
+          },
 
-        // Event listeners for Start All and Stop All buttons
-        document.getElementById("start-all").addEventListener("click", function () {
-          fetch(appendApiKey("/api/crons/startall"))
-            .then((response) => response.json())
-            .then((data) => {
-              alert(data.msg);
-              fetchCronStatus();
-            })
-            .catch((error) => {
-              console.error("Error starting all crons:", error);
-              alert("Failed to start all cron jobs.");
-            });
-        });
+          fetchLogs() {
+            fetch(this.appendApiKey("/api/logs"))
+              .then((response) => response.text())
+              .then((data) => {
+                this.logs = data;
+              })
+              .catch((error) => {
+                console.error("Error fetching logs:", error);
+                alert("Failed to fetch logs.");
+              });
+          },
 
-        document.getElementById("stop-all").addEventListener("click", function () {
-          fetch(appendApiKey("/api/crons/stopall"))
-            .then((response) => response.json())
-            .then((data) => {
-              alert(data.msg);
-              fetchCronStatus();
-            })
-            .catch((error) => {
-              console.error("Error stopping all crons:", error);
-              alert("Failed to stop all cron jobs.");
-            });
-        });
+          startAll() {
+            fetch(this.appendApiKey("/api/crons/startall"))
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.msg);
+                this.fetchCronStatus();
+              })
+              .catch((error) => {
+                console.error("Error starting all crons:", error);
+                alert("Failed to start all cron jobs.");
+              });
+          },
 
-        // Fetch logs
-        function fetchLogs() {
-          fetch(appendApiKey("/api/logs"))
-            .then((response) => response.text())
-            .then((data) => {
-              const logsElement = document.getElementById("logs");
-              logsElement.textContent = data;
-            })
-            .catch((error) => {
-              console.error("Error fetching logs:", error);
-              alert("Failed to fetch logs.");
-            });
-        }
+          stopAll() {
+            fetch(this.appendApiKey("/api/crons/stopall"))
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.msg);
+                this.fetchCronStatus();
+              })
+              .catch((error) => {
+                console.error("Error stopping all crons:", error);
+                alert("Failed to stop all cron jobs.");
+              });
+          },
 
-        // Event listener for Refresh Logs button
-        document.getElementById("refresh-logs").addEventListener("click", function () {
-          fetchLogs();
-        });
-
-        // Initial fetch of cron status and logs
-        fetchCronStatus();
-        fetchLogs();
-
-        // Optional: Polling to update cron status and logs every 10 seconds
-        setInterval(fetchCronStatus, 10000);
-        setInterval(fetchLogs, 10000);
-      });
+          forceExecute(cronName) {
+            fetch(this.appendApiKey("/api/crons/force/" + encodeURIComponent(cronName)))
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.message);
+                this.fetchCronStatus();
+              })
+              .catch((error) => {
+                console.error("Error forcing cron execution:", error);
+                alert("Failed to force execute the cron job.");
+              });
+          },
+        };
+      }
     </script>
   </body>
 </html>

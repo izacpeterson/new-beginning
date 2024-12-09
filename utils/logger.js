@@ -1,30 +1,64 @@
-const { createLogger, format, transports } = require("winston");
-const { combine, timestamp, printf, colorize } = format;
+import winston from "winston";
 
-// Define your custom log format
-const customFormat = printf(({ level, message, timestamp, ...metadata }) => {
-  let msg = `${timestamp} [${level}] : ${message} `;
-  if (Object.keys(metadata).length !== 0) {
-    msg += JSON.stringify(metadata);
+// If using older Node.js versions, uncomment and install node-fetch:
+// const fetch = require('node-fetch');
+
+// Replace this URL with the one provided by your Slack app
+const SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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";
+
+class SlackErrorTransport extends winston.Transport {
+  constructor(opts) {
+    super(opts);
+    this.webhookUrl = opts.webhookUrl;
   }
 
-  return msg;
+  log(info, callback) {
+    setImmediate(() => this.emit("logged", info));
+
+    if (info.level === "error") {
+      return;
+      fetch(this.webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `:warning: *NODECODE Error Logged*\n*Message:* ${info.message}\n*Timestamp:* ${info.timestamp}`,
+        }),
+      }).catch((err) => {
+        // Handle fetch errors (network issues, etc.)
+        console.error("Failed to send Slack message:", err);
+      });
+    }
+
+    callback();
+  }
+}
+
+// Define a common log format
+const logFormat = winston.format.printf(({ timestamp, level, message }) => {
+  return `${timestamp} [${level}] : ${message}`;
 });
 
-// Create the logger instance
-const logger = createLogger({
-  level: "info", // Set the default logging level
-  format: combine(
-    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    colorize(), // Adds color to the console output
-    customFormat
-  ),
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), winston.format.uncolorize()),
   transports: [
-    new transports.Console(),
-    // You can add more transports, such as File transport, if needed
-    new transports.File({ filename: "./logs/app.log" }),
+    new winston.transports.Console({
+      format: winston.format.combine(winston.format.colorize(), winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), logFormat),
+    }),
+    new winston.transports.File({
+      filename: "./logs/app.log",
+      format: winston.format.combine(winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), winston.format.uncolorize(), logFormat),
+    }),
+    // Add the custom Slack error reporting transport
+    new SlackErrorTransport({
+      webhookUrl: SLACK_WEBHOOK_URL,
+      level: "error", // Only error-level logs will be passed to this transport
+    }),
   ],
-  exitOnError: false, // Do not exit on handled exceptions
 });
 
-module.exports = logger;
+logger.info("Server listening on port 80");
+logger.info("Starting application...");
+// logger.error("A sample error to test Slack webhook transport");
+
+export default logger;

@@ -1,7 +1,7 @@
-const logger = require("../utils/logger.js");
-const { alnApiKey } = require("../config.js");
+import logger from "../utils/logger.js";
+import { alnApiKey } from "../config.js";
 
-class ALN {
+export default class ALN {
   constructor() {
     this.baseUrl = "https://odata4.alndata.com/";
     this.apiKey = alnApiKey;
@@ -110,5 +110,3 @@ class ALN {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
-
-module.exports = ALN;

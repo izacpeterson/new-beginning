@@ -1,0 +1,12 @@
+2024-12-05 15:46:17 [info] : Server listening on port 80
+2024-12-05 15:46:17 [info] : Starting application...
+2024-12-05 15:46:17 [info] : Starting application...
+2024-12-05 15:46:17 [info] : Server listening on port 80
+2024-12-05 15:46:46 [info] : DemoCron started with cron expression: 0 */5 * * * *
+2024-12-05 15:46:46 [info] : HubSpotAlnCron started with cron expression: 0 9-17 * * 1-5
+2024-12-05 15:46:46 [info] : Rotate Api Key started with cron expression: 0 0 0 1 * *
+2024-12-05 15:46:46 [info] : All cron jobs have been started.
+2024-12-05 15:46:49 [info] : DemoCron stopped.
+2024-12-05 15:46:49 [info] : HubSpotAlnCron stopped.
+2024-12-05 15:46:49 [info] : Rotate Api Key stopped.
+2024-12-05 15:46:49 [info] : All cron jobs have been stopped.

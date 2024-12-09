@@ -1,8 +1,8 @@
-const express = require("express");
-const HubSpot = require("../integrations/HubSpot.js");
-const ALN = require("../integrations/ALN.js");
+import express from "express";
+import HubSpot from "../integrations/HubSpot.js";
+import ALN from "../integrations/ALN.js";
 
-const logger = require("../utils/logger.js");
+import logger from "../utils/logger.js";
 
 const hs = new HubSpot();
 
@@ -15,7 +15,7 @@ router.put("/records/:module/:id", (req, res) => {});
 router.get("/records/:module/:id", async (req, res) => {
   const module = req.params.module;
   const id = req.params.id;
-  let properties = await hs.getModuleProperties(module);
+  let properties = (await hs.getModuleProperties(module)) || [];
   //   const properties = [];
   const record = await hs.getRecord(module, id, properties);
 
@@ -62,6 +62,6 @@ router.get("/aln/:hsid/:alnid", async (req, res) => {
   return;
 });
 
-module.exports = router;
+export default router;
 
 //126,146

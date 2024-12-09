@@ -1,5 +1,5 @@
-const logger = require("./utils/logger.js");
-const { startAllJobs, stopAllJobs } = require("./jobs");
+import logger from "./utils/logger.js";
+import { startAllJobs, stopAllJobs } from "./jobs/index.js";
 
 function startApp() {
   logger.info("Starting application...");
@@ -7,5 +7,6 @@ function startApp() {
 }
 startApp();
 
-require("./sandbox.js");
-require("./server.js");
+import "./server.js";
+
+import "./sandbox.js";

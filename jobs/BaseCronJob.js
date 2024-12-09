@@ -1,10 +1,10 @@
 // jobs/BaseCronJob.js
 
-const { CronJob } = require("cron");
-const cronParser = require("cron-parser");
-const logger = require("../utils/logger");
+import { CronJob } from "cron";
+import cronParser from "cron-parser";
+import logger from "../utils/logger.js";
 
-class BaseCronJob {
+export default class BaseCronJob {
   constructor(name = "BaseCronJob") {
     this.job = null;
     this.name = name;
@@ -97,5 +97,3 @@ class BaseCronJob {
     };
   }
 }
-
-module.exports = BaseCronJob;
