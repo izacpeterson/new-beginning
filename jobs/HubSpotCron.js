@@ -16,48 +16,6 @@ export default class HubSpotCron extends BaseCronJob {
     logger.info(`${this.name} execution started.`);
 
     try {
-      let recordsToUpdate = [];
-      let properties = await hs.getModuleProperties("locations");
-      let records = await hs.getAllRecords("locations", ["aln_property_id"]);
-
-      for (const record of records) {
-        try {
-          const alnId = record.properties.aln_property_id;
-          if (!alnId) continue;
-
-          const alnInfo = await aln.getLocations(alnId);
-          if (!alnInfo) continue;
-
-          const hubspotUpdateObject = {
-            aln_property_name: alnInfo.Property.AptName,
-            aln_pms: alnInfo.Property.PMSoftware,
-            aln_unit_count: alnInfo.Property.NumUnits,
-            aln_price_class: alnInfo.Property.PricingTier,
-            aln_year_built: alnInfo.Property.YearBuilt,
-            aln_street_1: alnInfo.Addresses[0].AddressLine1,
-            aln_street_2: alnInfo.Addresses[0].AddressLine2,
-            aln_city: alnInfo.Addresses[0].AddressCity,
-            aln_state: alnInfo.Addresses[0].AddressState,
-            aln_zip_code: alnInfo.Addresses[0].AddressZIP,
-            aln_sync_time: new Date(),
-          };
-
-          recordsToUpdate.push({
-            id: record.id,
-            properties: hubspotUpdateObject,
-          });
-        } catch (error) {
-          logger.error(`${this.name} error: ${error.message}`);
-        }
-      }
-
-      let result = await hs.bulkUpdateRecords("locations", recordsToUpdate);
-      console.log(result);
-    } catch (error) {
-      logger.error(`${this.name} error: ${error.message}`);
-    }
-
-    try {
       let records = await hs.getAllRecords("companies", ["aln_management_id"]);
       const recordsToUpdate = [];
 
@@ -102,7 +60,7 @@ export default class HubSpotCron extends BaseCronJob {
       }
 
       if (recordsToUpdate.length > 0) {
-        const result = await hs.bulkUpdateRecords("companies", recordsToUpdate);
+        // const result = await hs.bulkUpdateRecords("companies", recordsToUpdate);
         logger.info(`Updated ${recordsToUpdate.length} records successfully.`);
       } else {
         logger.info(`No records to update.`);

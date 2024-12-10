@@ -7,11 +7,6 @@
 
 <div>
   <div class="p-4">
-    <a class="btn btn-primary" href="/crons">Crons</a>
-    <a class="btn btn-primary" href="/logs">Logs</a>
-  </div>
-
-  <div class="p-4">
     <div class="mb-2">Search HubSpot Records</div>
     <div class="join">
       <select bind:value={hsModule} class="select select-bordered join-item">
