@@ -1,9 +1,10 @@
 import { checkPassword } from "./utils/auth.js";
 
 export default async function sandbox() {
+  return;
+
   let res = await checkPassword("izac", "izac");
   console.log(res);
-  return;
   const ALN = require("./integrations/ALN.js");
   const aln = new ALN();
   let alnInfo = await aln.getCompany("114703");

@@ -6,8 +6,10 @@ import session from "express-session";
 import * as myauth from "./utils/auth.js";
 import cors from "cors";
 
+import { handler } from "./frontend/build/handler.js";
+
 const app = express();
-app.set("trust proxy", true); // Ensure Express trusts proxy headers for correct IP resolution
+app.set("trust proxy", true);
 
 app.use(cors());
 app.use(express.json());
@@ -24,21 +26,8 @@ app.use(
   })
 );
 
-// Middleware to serve static files based on authentication
-// app.use((req, res, next) => {
-//   const isDevMode = process.env.DEV === "true";
-//   const clientIp = req.ip === "::1" || req.ip === "::ffff:127.0.0.1" ? "127.0.0.1" : req.ip;
+const WORK_IP = process.env.WORK_IP;
 
-//   const loggedIn = req.session?.loggedIn || isDevMode;
-
-//   const staticDir = loggedIn ? "public/home" : "public/login";
-//   express.static(staticDir)(req, res, next);
-// });
-
-// Define the work IP address
-const WORK_IP = process.env.WORK_IP; // Replace with your work IP address
-
-// Middleware for API authentication
 app.use("/api", async (req, res, next) => {
   const isDevMode = process.env.DEV === "true";
   const clientIp = req.ip === "::1" || req.ip === "::ffff:127.0.0.1" ? "127.0.0.1" : req.ip;
@@ -66,6 +55,8 @@ app.use("/api", async (req, res, next) => {
 });
 
 app.use("/api", routes);
+
+app.use("/", handler);
 
 app.listen(port, () => {
   logger.info(`Server listening on port ${port}`);

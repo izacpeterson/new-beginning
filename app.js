@@ -3,7 +3,7 @@ import { startAllJobs, stopAllJobs } from "./jobs/index.js";
 
 function startApp() {
   logger.info("Starting application...");
-  startAllJobs();
+  // startAllJobs();
 }
 startApp();
 

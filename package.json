@@ -4,8 +4,10 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "build:frontend": "cd frontend && npm run build",
+    "start": "npm run build:frontend && node app.js",
+    "dev:frontend": "cd frontend && npm run dev -- --open",
+    "dev": "concurrently \"npm run dev:frontend\" \"nodemon app.js\""
   },
   "nodemonConfig": {
     "watch": [
@@ -34,5 +36,8 @@
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }
