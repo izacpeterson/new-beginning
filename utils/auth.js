@@ -43,7 +43,6 @@ async function getApiKey() {
 async function dropTable(tableName) {
   const db = await connectToDatabase();
   await db.exec(`DROP TABLE IF EXISTS ${tableName}`);
-  console.log(`Table "${tableName}" removed (if it existed).`);
 }
 
 async function checkApiKey(testKey) {
@@ -62,7 +61,6 @@ async function generateNewApiKey() {
 }
 
 async function newUser(username, password) {
-  console.log("NEW USER");
   const db = await connectToDatabase();
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -100,11 +98,9 @@ async function checkPassword(username, password) {
   try {
     const row = await db.get(`SELECT password FROM users WHERE username = ?`, [username]);
     if (!row) {
-      console.log(false);
       return false; // User not found
     }
     const match = await bcrypt.compare(password, row.password);
-    console.log("match:", match);
     return match;
   } catch (err) {
     console.error(err);
@@ -127,7 +123,6 @@ async function updatePassword(username, newPassword) {
       throw new Error("User not found or password update failed.");
     }
 
-    console.log("Password updated successfully.");
     return "Password updated successfully.";
   } catch (err) {
     console.error(err);
@@ -135,6 +130,63 @@ async function updatePassword(username, newPassword) {
   }
 }
 
+async function upsertObject(obj) {
+  const db = await connectToDatabase();
+  const tableName = "Accounts";
+
+  const keys = Object.keys(obj);
+
+  if (keys.length === 0) {
+    throw new Error("Object must have at least one key-value pair.");
+  }
+
+  if (!keys.includes("id")) {
+    throw new Error("Object must include an 'id' property.");
+  }
+
+  // Create or update the table with columns matching the object's keys.
+  const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (
+        id INTEGER PRIMARY KEY
+    );`;
+
+  await new Promise((resolve, reject) => {
+    db.run(createTableQuery, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  for (const key of keys) {
+    if (key === "id") continue; // Skip 'id' as it is already part of the table.
+    const alterQuery = `ALTER TABLE ${tableName} ADD COLUMN ${key} TEXT;`;
+    await new Promise((resolve) => {
+      db.run(alterQuery, (err) => {
+        if (!err) resolve(); // Ignore errors if column already exists.
+        else resolve();
+      });
+    });
+  }
+
+  // Upsert the object.
+  const columns = keys.join(", ");
+  const placeholders = keys.map(() => "?").join(", ");
+  const updatePlaceholders = keys
+    .filter((key) => key !== "id")
+    .map((key) => `${key} = excluded.${key}`)
+    .join(", ");
+
+  const insertQuery = `INSERT INTO ${tableName} (${columns})
+        VALUES (${placeholders})
+        ON CONFLICT(id) DO UPDATE SET ${updatePlaceholders};`;
+
+  await new Promise((resolve, reject) => {
+    db.run(insertQuery, Object.values(obj), (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
 // updatePassword("izac", "izac1122");
 
-export { generateNewApiKey, checkApiKey, checkPassword };
+export { generateNewApiKey, checkApiKey, checkPassword, upsertObject };

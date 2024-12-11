@@ -6,6 +6,7 @@ export default class RotateApiKey extends BaseCronJob {
   constructor() {
     super("Rotate Api Key");
     this.cronTime = "0 0 0 1 * *";
+    this.description = "Generates a new API key. WARNING: it will override the old one";
   }
 
   async execute() {

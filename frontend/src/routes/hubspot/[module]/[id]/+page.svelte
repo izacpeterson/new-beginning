@@ -1,11 +1,18 @@
 <script>
   export let data;
 
-  const record = data.properties;
-  console.log(record.firstname);
+  const record = data.record.properties;
+  console.log(data);
 </script>
 
 <div class="container mx-auto p-4">
+  <div class="breadcrumbs text-sm">
+    <ul>
+      <li>HubSpot</li>
+      <li>{data.module}</li>
+      <li>{data.id}</li>
+    </ul>
+  </div>
   <div class="my-4">
     <h2 class="card-title text-4xl">
       {record.firstname}
@@ -45,7 +52,7 @@
               <td class="font-semibold">{key}</td>
               <td>
                 {#if key == "associatedcompanyid"}
-                  <a href={`/companies/${value}`} target="_blank" class="text-blue-500 underline italic">{value}</a>
+                  <a href={`/hubspot/companies/${value}`} target="_blank" class="text-blue-500 underline italic">{value}</a>
                 {:else}
                   {value}
                 {/if}

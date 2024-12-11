@@ -4,10 +4,13 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "build:frontend": "cd frontend && npm run build",
-    "start": "npm run build:frontend && node app.js",
-    "dev:frontend": "cd frontend && npm run dev -- --open",
-    "dev": "concurrently \"npm run dev:frontend\" \"nodemon app.js\""
+    "setup:root": "npm install",
+    "setup:frontend": "cd frontend && npm install",
+    "setup": "npm run setup:root && npm run setup:frontend",
+    "build:frontend": "npm run setup && cd frontend && npm run build",
+    "start": "npm run setup && npm run build:frontend && node app.js",
+    "dev:frontend": "npm run setup && cd frontend && npm run dev -- --open",
+    "dev": "npm run setup && concurrently \"npm run dev:frontend\" \"nodemon app.js\""
   },
   "nodemonConfig": {
     "watch": [
@@ -32,12 +35,14 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-session": "^1.18.1",
+    "greenlock-express": "^4.0.3",
     "lodash": "^4.17.21",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "nodemon": "^2.0.22"
   }
 }

@@ -1,12 +1,12 @@
 import express from "express";
-import { getLogsFronDB } from "../utils/db.js";
+import { getErrorsFromDB } from "../utils/db.js";
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  let logs = await getLogsFronDB();
+  let errors = await getErrorsFromDB();
 
-  res.send(logs);
+  res.send(errors);
 });
 
 export default router;

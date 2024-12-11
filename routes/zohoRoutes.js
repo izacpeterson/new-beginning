@@ -9,8 +9,8 @@ router.get("/records/:module/:id", async (req, res) => {
     const zoho = new Zoho();
     await zoho.init();
 
-    // const module = req.params.module;
-    const module = "Accounts";
+    const module = req.params.module;
+    // const module = "Accounts";
     const id = req.params.id;
     //   const properties = [];
     const record = await zoho.getRecord(module, id);

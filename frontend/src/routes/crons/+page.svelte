@@ -23,11 +23,16 @@
   <button on:click={handleStartAll} class="btn btn-success">Start All Jobs</button>
   <button on:click={handleStopAll} class="btn btn-error">Stop All Jobs</button>
 </div>
-<div class="container mx-auto p-4 space-y-4 flex justify-between">
+<div class="container mx-auto p-4 space-y-4 flex flex-wrap justify-evenly">
   {#each jobs as job}
-    <div class="card bg-base-100 shadow-md">
+    <div class="card bg-base-100 shadow-md w-96">
       <div class="card-body">
         <h2 class="card-title text-lg font-bold text-primary">{job.name}</h2>
+        {#if job.description}
+          <p class="italic text-xs">
+            {job.description}
+          </p>
+        {/if}
         <p>
           <span class="font-semibold">Crontime:</span>
           {job.cronTime}

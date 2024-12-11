@@ -1,7 +1,5 @@
 import winston from "winston";
-
-// If using older Node.js versions, uncomment and install node-fetch:
-// const fetch = require('node-fetch');
+import { logErrorToDB, logToDB } from "./db.js";
 
 // Replace this URL with the one provided by your Slack app
 const SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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";
@@ -14,9 +12,8 @@ class SlackErrorTransport extends winston.Transport {
 
   log(info, callback) {
     setImmediate(() => this.emit("logged", info));
-
     if (info.level === "error") {
-      return;
+      logErrorToDB(info.message);
       fetch(this.webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,6 +26,15 @@ class SlackErrorTransport extends winston.Transport {
       });
     }
 
+    callback();
+  }
+}
+
+// Custom Transport for Logging to the Database
+class DBTransport extends winston.Transport {
+  log(info, callback) {
+    setImmediate(() => this.emit("logged", info));
+    logToDB({ level: info.level, message: info.message, timestamp: info.timestamp });
     callback();
   }
 }
@@ -49,16 +55,17 @@ const logger = winston.createLogger({
       filename: "./logs/app.log",
       format: winston.format.combine(winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), winston.format.uncolorize(), logFormat),
     }),
-    // Add the custom Slack error reporting transport
     new SlackErrorTransport({
       webhookUrl: SLACK_WEBHOOK_URL,
       level: "error", // Only error-level logs will be passed to this transport
     }),
+    new DBTransport(), // Add the DBTransport here
   ],
 });
 
-logger.info("Server listening on port 80");
-logger.info("Starting application...");
-// logger.error("A sample error to test Slack webhook transport");
+// logger.info("Server listening on port 80");
+// logger.info("Starting application...");
+// logger.error("A sample error to test Slack webhook and DB logging");
+// logger.error("Testing DB logging errors");
 
 export default logger;

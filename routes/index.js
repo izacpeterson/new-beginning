@@ -5,6 +5,7 @@ import logRoutes from "./logRoutes.js";
 import syncRoutes from "./syncRoutes.js";
 import authRoutes from "./authRoutes.js";
 import zohoRoutes from "./zohoRoutes.js";
+import errorRoutes from "./errorRoutes.js";
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.use("/logs", logRoutes);
 router.use("/sync", syncRoutes);
 router.use("/auth", authRoutes);
 router.use("/zoho", zohoRoutes);
+router.use("/errors", errorRoutes);
 
 router.get("/", (req, res) => {
   res.setHeader("Content-Type", "text/plain");

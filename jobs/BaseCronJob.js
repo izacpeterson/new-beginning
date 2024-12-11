@@ -10,6 +10,7 @@ export default class BaseCronJob {
     this.name = name;
     this.cronTime = null; // Will be defined in derived classes
     this.lastExecutionTime = null; // To store the last execution time
+    this.description = null;
   }
 
   start() {
@@ -94,6 +95,7 @@ export default class BaseCronJob {
       cronTime: this.cronTime,
       lastExecution: lastExecution ? lastExecution.toLocaleString() : null,
       nextExecution: new Date(nextExecution).toLocaleString() || "Not available",
+      description: this.description,
     };
   }
 }

@@ -10,8 +10,6 @@ const aln = new ALN();
 
 const router = express.Router();
 
-router.put("/records/:module/:id", (req, res) => {});
-
 router.get("/records/:module/:id", async (req, res) => {
   const module = req.params.module;
   const id = req.params.id;

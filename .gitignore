@@ -1,7 +1,7 @@
 *.env
 .env
 node_modules
-logs
+*.log
 zohoLocations.json
 token.json
-db.db
+*.db

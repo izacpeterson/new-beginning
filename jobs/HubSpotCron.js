@@ -10,6 +10,7 @@ export default class HubSpotCron extends BaseCronJob {
   constructor() {
     super("HubSpotAlnCron");
     this.cronTime = "0 9-17 * * 1-5";
+    this.description = "Pull data from ALN and push to HubSpot accounts";
   }
 
   async execute() {
@@ -37,7 +38,6 @@ export default class HubSpotCron extends BaseCronJob {
           }
 
           let potentialRevenue = (alnInfo.OfficeUnitCount || 0) * 0.7;
-          console.log(`Potential Revenue for ${record.id}: ${potentialRevenue}`);
 
           recordsToUpdate.push({
             id: record.id,

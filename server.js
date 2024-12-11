@@ -33,20 +33,16 @@ app.use("/api", async (req, res, next) => {
   const clientIp = req.ip === "::1" || req.ip === "::ffff:127.0.0.1" ? "127.0.0.1" : req.ip;
   const isWorkIp = clientIp === WORK_IP;
 
-  // console.log(`Client IP: ${clientIp}, Work IP: ${isWorkIp}, Dev Mode: ${isDevMode}`);
-
   if (isDevMode || isWorkIp) {
-    // console.log("Access granted: Development mode or work IP.");
     return next();
   }
 
   const apiKey = req.query.key || req.body.key;
-  // console.log(`Received API Key: ${apiKey}`);
 
-  const isAuthorized = req.session?.loggedIn || apiKey === process.env.API_KEY || (apiKey && (await myauth.checkApiKey(apiKey)));
+  // const isAuthorized = req.session?.loggedIn || apiKey === process.env.API_KEY || (apiKey && (await myauth.checkApiKey(apiKey)));
+  const isAuthorized = apiKey && (await myauth.checkApiKey(apiKey));
 
   if (isAuthorized) {
-    // console.log("Access granted: Authorized.");
     next();
   } else {
     // console.error("Access denied: Unauthorized request.");

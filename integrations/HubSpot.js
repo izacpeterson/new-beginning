@@ -1,11 +1,12 @@
 /* eslint-disable class-methods-use-this */
 import logger from "../utils/logger.js";
 import { hsApiKey } from "../config.js";
+import "dotenv/config";
 
 export default class HubSpot {
   constructor() {
     this.baseUrl = "https://api.hubapi.com/crm/v3";
-    this.token = hsApiKey;
+    this.token = process.env.HS_API_KEY;
   }
 
   async getRecord(module, id, properties) {
@@ -35,7 +36,6 @@ export default class HubSpot {
       url = `${url}?idProperty=${idProperty}`;
     }
     try {
-      console.log(url);
       const response = await fetch(url, {
         method: "PATCH",
         headers: {
@@ -118,16 +118,15 @@ export default class HubSpot {
 
   async getModuleProperties(module) {
     const url = `${this.baseUrl}/properties/${module}`;
-    console.log(url);
     try {
       const response = await fetch(url, {
         headers: {
           authorization: `Bearer ${this.token}`,
         },
       });
-      console.log(response);
+      // console.log(response);
       const data = await response.json();
-
+      // console.log(data);
       let propertyArray = [];
 
       data.results.forEach((property) => {

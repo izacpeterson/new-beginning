@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
 import "dotenv/config";
-
+import logger from "../utils/logger.js";
 sqlite3.verbose(); // Ensures verbose mode for sqlite3
 
 export default class Zoho {
@@ -12,7 +12,7 @@ export default class Zoho {
     // Initialize the database
     this.db = new sqlite3.Database("db.db", (err) => {
       if (err) {
-        console.error("Could not connect to database", err);
+        logger.error("Zoho Error: Could not connect to database", err);
       } else {
         this.initializeDatabase();
       }
@@ -33,7 +33,7 @@ export default class Zoho {
 
     this.db.run(createTableQuery, (err) => {
       if (err) {
-        console.error("Error creating tokens table", err);
+        logger.error("Zoho Error: Error creating tokens table", err);
       }
     });
   }
@@ -50,7 +50,7 @@ export default class Zoho {
       const selectQuery = "SELECT * FROM tokens WHERE id = 1";
       this.db.get(selectQuery, (err, row) => {
         if (err) {
-          console.error("Error loading token from database:", err);
+          logger.error("Zoho Error: Error loading token from database:", err);
           resolve();
         } else {
           if (row) {
@@ -81,7 +81,7 @@ export default class Zoho {
 
       this.db.run(upsertQuery, [this.token.access_token, this.token.refresh_token, this.token.expires_in, this.token.expires_at.toISOString()], function (err) {
         if (err) {
-          console.error("Error saving token to database:", err);
+          logger.error("Zoho Error: Error saving token to database:", err);
           reject(err);
         } else {
           resolve();
@@ -116,12 +116,12 @@ export default class Zoho {
           expires_at: new Date(Date.now() + data.expires_in * 1000),
         };
         await this.saveTokensToDatabase();
-        console.log("Access and refresh tokens have been saved to the database");
+        logger.info("Access and refresh tokens have been saved to the database");
       } else {
-        console.error("Failed to obtain access token:", data);
+        logger.error("Zoho Error: Failed to obtain access token:", data);
       }
     } catch (err) {
-      console.error("Error fetching access token:", err);
+      logger.error("Zoho Error: Error fetching access token:", err);
     }
   }
 
@@ -148,10 +148,10 @@ export default class Zoho {
         this.token.expires_at = new Date(Date.now() + data.expires_in * 1000);
         await this.saveTokensToDatabase();
       } else {
-        console.error("Failed to refresh access token:", data);
+        logger.error("Zoho Error: Failed to refresh access token:", data);
       }
     } catch (err) {
-      console.error("Error refreshing access token:", err);
+      logger.error("Zoho Error: Error refreshing access token:", err);
     }
   }
 
@@ -164,65 +164,65 @@ export default class Zoho {
 
   async getRecord(module, id) {
     if (!module || !id) {
-      console.error("Module and ID are required");
+      logger.error("Zoho Error: Module and ID are required");
       return;
     }
 
     const url = `https://www.zohoapis.com/crm/v3/${module}/${id}`;
-    console.log(url);
+    logger.debug(`Fetching URL: ${url}`);
     try {
       const response = await fetch(url, {
         method: "GET",
         headers: this.getAuthHeaders(),
       });
 
-      console.log(response);
+      logger.debug(`Response: ${response.status}`);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error fetching record:", errorData);
+        logger.error("Zoho Error: Error fetching record:", errorData);
         return;
       }
 
       return await response.json();
     } catch (err) {
-      console.error("Error fetching record:", err);
+      logger.error("Zoho Error: Error fetching record:", err);
     }
   }
 
   async getRelatedRecord(module, id, relatedModule, fields = []) {
     if (!module || !id || !relatedModule) {
-      console.error("Module and ID are required");
+      logger.error("Zoho Error: Module and ID are required");
       return;
     }
 
     fields.join(",");
 
     const url = `https://www.zohoapis.com/crm/v3/${module}/${id}/${relatedModule}?fields=${fields}`;
-    console.log(url);
+    logger.debug(`Fetching URL: ${url}`);
     try {
       const response = await fetch(url, {
         method: "GET",
         headers: this.getAuthHeaders(),
       });
 
-      console.log(response);
+      logger.debug(`Response: ${response.status}`);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error fetching record:", errorData);
+        logger.error("Zoho Error: Error fetching record:", errorData);
         return;
       }
 
       return await response.json();
     } catch (err) {
-      console.error("Error fetching record:", err);
+      logger.error("Zoho Error: Error fetching record:", err);
     }
   }
 
   async updateRecord(module, id, data) {
     if (!module || !id || !data) {
-      console.error("Module, ID, and data are required");
+      logger.error("Zoho Error: Module, ID, and data are required");
       return;
     }
 
@@ -249,19 +249,19 @@ export default class Zoho {
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.error("Error updating record:", responseData);
+        logger.error("Zoho Error: Error updating record:", responseData);
         return responseData;
       }
 
       return responseData;
     } catch (err) {
-      console.error("Error updating record:", err);
+      logger.error("Zoho Error: Error updating record:", err);
     }
   }
 
   async getAllModuleRecords(module, fields = []) {
     if (!module) {
-      console.error("Module is required");
+      logger.error("Zoho Error: Module is required");
       return;
     }
 
@@ -295,7 +295,7 @@ export default class Zoho {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("Error fetching module records:", errorData);
+          logger.error("Zoho Error: Error fetching module records:", errorData);
           break; // Exit the loop on error
         }
 
@@ -304,7 +304,7 @@ export default class Zoho {
         if (data.data && Array.isArray(data.data)) {
           allRecords = allRecords.concat(data.data);
         } else {
-          console.warn("No data found in the response.");
+          logger.warn("No data found in the response.");
         }
 
         if (data.info) {
@@ -314,14 +314,14 @@ export default class Zoho {
           moreRecords = false;
         }
 
-        console.log(`Fetched ${allRecords.length} records so far...`);
+        logger.info(`Fetched ${allRecords.length} records so far...`);
       } catch (err) {
-        console.error("Error fetching module records:", err);
+        logger.error("Zoho Error: Error fetching module records:", err);
         break; // Exit the loop on error
       }
     }
 
-    console.log(`Total records fetched: ${allRecords.length}`);
+    logger.info(`Total records fetched: ${allRecords.length}`);
     return allRecords;
   }
 
@@ -340,7 +340,7 @@ export default class Zoho {
       let data = await response.json();
       return data;
     } catch (error) {
-      console.log(error);
+      logger.error("Zoho Error: Error querying records:", error);
     }
   }
 }

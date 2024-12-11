@@ -3,6 +3,8 @@
 
   let hsModule = "";
   let hsId = "";
+
+  (async () => {})();
 </script>
 
 <div>

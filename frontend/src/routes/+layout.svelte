@@ -1,6 +1,7 @@
 <script>
   import "../app.css";
-  let { children } = $props();
+  let { children, data } = $props();
+  let errors = data.errors;
 
   let email = $state("");
   let key = $state("");
@@ -13,10 +14,19 @@
     <div class="flex-1">
       <a href="/" class="btn btn-primary text-xl">Internal Systems</a>
     </div>
+
     <div class="flex-none">
       <ul class="menu menu-horizontal px-1">
+        <li>
+          <div class="indicator">
+            <span class="indicator-item badge badge-error">{errors.length}</span>
+            <a href="/errors">Errors</a>
+          </div>
+        </li>
+
         <li><a href="/crons">Crons</a></li>
         <li><a href="/logs">Logs</a></li>
+
         <li><a href="/settings">Settings</a></li>
 
         <!-- <li>
@@ -41,3 +51,5 @@
     <button onclick={async () => {}} class="btn btn-primary">Login</button>
   </div>
 {/if}
+
+<input type="checkbox" value="darkTheme" class="toggle theme-controller" />

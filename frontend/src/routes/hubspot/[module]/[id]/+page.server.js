@@ -3,10 +3,10 @@ import HubSpot from "../../../../../../integrations/HubSpot";
 export async function load({ params }) {
   let module = params.module;
   let id = params.id;
+  let url = `http://localhost/api/hubspot/records/${module}/${id}`;
+  console.log(url);
+  let response = await fetch(url);
+  let record = await response.json();
 
-  const hubspot = new HubSpot();
-  const properties = await hubspot.getModuleProperties(module);
-  const record = await hubspot.getRecord(module, id, properties);
-
-  return record;
+  return { record, id, module };
 }

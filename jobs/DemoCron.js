@@ -5,6 +5,7 @@ export default class DemoCron extends BaseCronJob {
   constructor() {
     super("DemoCron");
     this.cronTime = "0 */5 * * * *";
+    this.description = "A demo cron";
   }
 
   execute() {
